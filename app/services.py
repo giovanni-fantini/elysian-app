@@ -13,6 +13,16 @@ client = OpenAI()
 
 
 def add_person(db: Session, person_data: PersonAdded):
+    """
+    Add a new person to the database.
+
+    Args:
+        db (Session): The database session.
+        person_data (PersonAdded): The data of the person to add.
+
+    Returns:
+        Person: The newly added person.
+    """
     new_person = Person(id=str(person_data.person_id), name=person_data.name)
     db.add(new_person)
     db.commit()
@@ -21,6 +31,16 @@ def add_person(db: Session, person_data: PersonAdded):
 
 
 def rename_person(db: Session, person_data: PersonRenamed):
+    """
+    Rename an existing person in the database.
+
+    Args:
+        db (Session): The database session.
+        person_data (PersonRenamed): The data of the person to rename.
+
+    Returns:
+        Person: The renamed person, or False if the person was not found.
+    """
     person = db.query(Person).filter(Person.id == str(person_data.person_id)).first()
     if not person:
         return False
@@ -32,6 +52,16 @@ def rename_person(db: Session, person_data: PersonRenamed):
 
 
 def remove_person(db: Session, person_data: PersonRemoved):
+    """
+    Remove an existing person from the database.
+
+    Args:
+        db (Session): The database session.
+        person_data (PersonRemoved): The data of the person to remove.
+
+    Returns:
+        bool: True if the person was removed successfully, otherwise False.
+    """
     person = db.query(Person).filter(Person.id == str(person_data.person_id)).first()
     if not person:
         return False
@@ -42,10 +72,29 @@ def remove_person(db: Session, person_data: PersonRemoved):
 
 
 def get_person(db: Session, person_id: UUID4) -> Person:
+    """
+    Get a person by their UUID.
+
+    Args:
+        db (Session): The database session.
+        person_id (UUID4): The UUID of the person to retrieve.
+
+    Returns:
+        Person: The person if found, otherwise None.
+    """
     return db.query(Person).filter(Person.id == str(person_id)).first()
 
 
 def translate_nl_to_sql(nl_query: str) -> dict:
+    """
+    Translate a natural language query to SQL using OpenAI.
+
+    Args:
+        nl_query (str): The natural language query.
+
+    Returns:
+        dict: The SQL information obtained from the query.
+    """
     system_message = """
     Given the following SQL table in MariaDb, your job is to write safe queries given a user's request. \n
     Ensure that no dangerous operations can be performed on the database (like SQL injection or deletion of records). \n
@@ -69,7 +118,18 @@ def translate_nl_to_sql(nl_query: str) -> dict:
 
 
 def parse_openai_response(response: str) -> dict:
-    # Strip leading and trailing whitespace/newlines
+    """
+    Parse the response from OpenAI to extract SQL template and parameters.
+
+    Args:
+        response (str): The OpenAI response.
+
+    Returns:
+        dict: The SQL template and parameters extracted from the response.
+
+    Raises:
+        ValueError: If the SQL template or JSON parameters are not found.
+    """
     response = response.strip()
 
     # Extract SQL template
@@ -91,6 +151,20 @@ def parse_openai_response(response: str) -> dict:
 
 
 def format_and_execute_sql(db: Session, sql_info: dict):
+    """
+    Format and execute the provided SQL query.
+
+    Args:
+        db (Session): The database session.
+        sql_info (dict): The SQL template and parameters.
+
+    Returns:
+        str: The formatted results to be returned.
+
+    Raises:
+        SQLAlchemyError: If an SQL execution error occurs.
+        Exception: For any other exceptions.
+    """
     query_template = sql_info.get("query_template")
     params = sql_info.get("params")
 

@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import UUID4, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.docs import (
+    accept_webhook_examples,
+    accept_webhook_responses,
+    execute_custom_nl_query_examples,
+    execute_custom_nl_query_responses,
+    get_name_responses,
+)
 from app.models import (
     GetNameResponse,
     PersonAdded,
@@ -28,14 +35,27 @@ router = APIRouter()
 
 @router.post(
     "/accept_webhook",
-    responses={
-        200: {"description": "Webhook processed successfully"},
-        400: {"description": "Invalid input"},
-        404: {"description": "Person not found"},
-        500: {"description": "Server error"},
-    },
+    responses=accept_webhook_responses,
+    summary="Process Webhook Payload",
+    description="Processes incoming webhook payloads and performs specific actions based on the payload type.",
 )
-def accept_webhook(payload: WebhookPayload, db: Session = Depends(get_db)):
+def accept_webhook(
+    payload: WebhookPayload = Body(..., examples=accept_webhook_examples),
+    db: Session = Depends(get_db),
+):
+    """
+    Process incoming webhook payloads and perform actions based on the payload type.
+
+    Args:
+        payload (WebhookPayload): The payload sent by the webhook.
+        db (Session): The database session.
+
+    Returns:
+        dict: A success message if the webhook was processed successfully.
+
+    Raises:
+        HTTPException: When an error occurs (specified by status code and detail).
+    """
     try:
         if payload.payload_type == "PersonAdded":
             person_data = PersonAdded(**payload.payload_content)
@@ -63,14 +83,24 @@ def accept_webhook(payload: WebhookPayload, db: Session = Depends(get_db)):
 @router.get(
     "/get_name",
     response_model=GetNameResponse,
-    responses={
-        200: {"description": "Name fetched successfully"},
-        404: {"description": "Person not found"},
-        422: {"description": "Invalid UUID format"},
-        500: {"description": "Server error"},
-    },
+    responses=get_name_responses,
+    summary="Fetch Person Name",
+    description="Fetches the name of a person by their UUID.",
 )
 async def get_name(person_id: UUID4, db: Session = Depends(get_db)):
+    """
+    Fetch the name of a person by their UUID.
+
+    Args:
+        person_id (UUID4): The UUID of the person.
+        db (Session): The database session.
+
+    Returns:
+        GetNameResponse: The name of the person if found.
+
+    Raises:
+        HTTPException: When an error occurs (specified by status code and detail).
+    """
     try:
         person = get_person(db, person_id)
         if not person:
@@ -85,15 +115,27 @@ async def get_name(person_id: UUID4, db: Session = Depends(get_db)):
 @router.post(
     "/execute_custom_nl_query",
     response_model=QueryResponse,
-    responses={
-        200: {"description": "Query executed successfully"},
-        400: {"description": "Invalid input"},
-        500: {"description": "Server error"},
-    },
+    responses=execute_custom_nl_query_responses,
+    summary="Execute Custom Natural Language Query",
+    description="Executes a custom natural language query and returns the result.",
 )
 async def execute_custom_nl_query(
-    query_request: QueryRequest, db: Session = Depends(get_db)
+    query_request: QueryRequest = Body(..., examples=execute_custom_nl_query_examples),
+    db: Session = Depends(get_db),
 ):
+    """
+    Execute a custom natural language query.
+
+    Args:
+        query_request (QueryRequest): The natural language query.
+        db (Session): The database session.
+
+    Returns:
+        QueryResponse: The result of the query execution.
+
+    Raises:
+        HTTPException: When an error occurs (specified by status code and detail).
+    """
     try:
         # Convert natural language to SQL
         sql_info_raw = translate_nl_to_sql(query_request.natural_language_query)
