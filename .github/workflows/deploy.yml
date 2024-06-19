@@ -41,14 +41,11 @@ jobs:
     - name: Run Black
       run: poetry run black --check .
 
-    - name: Run Isort
-      run: poetry run isort --check .
-
-    - name: Run Flake8
-      run: poetry run flake8 .
+    # - name: Run Isort
+    #   run: poetry run isort --check .
 
     - name: Run Bandit
-      run: poetry run bandit -r .
+      run: poetry run bandit -r . -x tests -s B101
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v1

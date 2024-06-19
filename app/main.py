@@ -27,4 +27,4 @@ app.add_middleware(
 @app.get("/nl-to-sql", response_class=HTMLResponse)
 async def serve_nl_to_sql():
     with open("nl_to_sql.html") as f:
-        return HTMLResponse(f.read())
+        return HTMLResponse(f.read())  # checking push from GH
