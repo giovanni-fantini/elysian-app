@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NL to SQL Query Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            border-radius: 4px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NL to SQL Query Interface</h1>
+        <form id="nl-query-form">
+            <label for="nl-query">Enter Natural Language Query:</label>
+            <textarea id="nl-query" rows="4" cols="50" required></textarea><br><br>
+            <button type="submit">Submit</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('nl-query-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const nlQuery = document.getElementById('nl-query').value;
+            const resultDiv = document.getElementById('result');
+
+            try {
+                const response = await fetch('/execute_custom_nl_query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ natural_language_query: nlQuery })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = '<pre>Error: ' + JSON.stringify(errorData, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<pre>Error: ' + error.message + '</pre>';
+            }
+        });
+    </script>
+</body>
+</html>
