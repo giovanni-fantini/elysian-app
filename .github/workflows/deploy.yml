@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
+    branches: 
       - master
   pull_request:
     branches:
@@ -27,7 +27,15 @@ jobs:
     - name: Install dependencies
       run: poetry install
 
+    - name: Set environment variables for testing
+      run: |
+        echo "DATABASE_URL=mysql+pymysql://mariadb_user:mariadb_password@127.0.0.1:3306/elysian_db" >> $GITHUB_ENV
+        echo "OPENAI_API_KEY=test-api-key" >> $GITHUB_ENV
+
     - name: Run Tests
+      env:
+        DATABASE_URL: mysql+pymysql://mariadb_user:mariadb_password@127.0.0.1:3306/elysian_db
+        OPENAI_API_KEY: test-api-key
       run: poetry run pytest
 
     - name: Run Black
@@ -40,7 +48,7 @@ jobs:
       run: poetry run flake8 .
 
     - name: Run Bandit
-      run: poetry run flake8 .
+      run: poetry run bandit -r .
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v1
@@ -67,7 +75,7 @@ jobs:
         scp -o StrictHostKeyChecking=no -i ssh_key.pem docker-compose.prod.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/docker-compose.yml
 
         ssh -o StrictHostKeyChecking=no -i ssh_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          export DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          export DATABASE_URL=${{ secrets.DATABASE_URL }}
           export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
           docker-compose -f docker-compose.yml down

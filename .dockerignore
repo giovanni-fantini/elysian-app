@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# Allow code files and directories
+!/alembic/**/*
+!/app/**/*
+!/alembic.ini
+!/Dockerfile
+!/nl_to_sql.html
+!/poetry.lock
+!/pyproject.toml

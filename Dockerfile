@@ -1,16 +1,16 @@
+# Example Dockerfile
 FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy poetry configuration files
-COPY pyproject.toml poetry.lock /app/
+# Copy only the allowed files and directories
+COPY . .
 
 # Install Poetry
 RUN pip install poetry
 
 # Install dependencies
-COPY . /app
 RUN poetry install --no-dev
 
 # Expose the application port
