@@ -1,15 +1,19 @@
 import os
 from logging.config import fileConfig
+
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 from app.models import Base  # Ensure you import your models Base class correctly
-from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Get the database URL from environment variable or use a default placeholder
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://user:password@localhost/claim_conductor")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "mysql+pymysql://user:password@localhost/claim_conductor"
+)
 
 config = context.config
 
@@ -23,6 +27,7 @@ if config.config_file_name is not None:
 # Set the target metadata for 'autogenerate' support
 target_metadata = Base.metadata
 
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
@@ -34,6 +39,7 @@ def run_migrations_offline():
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
@@ -48,6 +54,7 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

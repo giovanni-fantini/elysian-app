@@ -1,20 +1,40 @@
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import UUID4
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import UUID4, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from app.db import get_db
-from app.services import add_person, rename_person, remove_person, get_person, translate_nl_to_sql, parse_openai_response, format_and_execute_sql
-from app.models import PersonAdded, PersonRenamed, PersonRemoved, WebhookPayload, GetNameResponse, QueryRequest, QueryResponse
-from pydantic import ValidationError
+from app.models import (
+    GetNameResponse,
+    PersonAdded,
+    PersonRemoved,
+    PersonRenamed,
+    QueryRequest,
+    QueryResponse,
+    WebhookPayload,
+)
+from app.services import (
+    add_person,
+    format_and_execute_sql,
+    get_person,
+    parse_openai_response,
+    remove_person,
+    rename_person,
+    translate_nl_to_sql,
+)
 
 router = APIRouter()
 
-@router.post("/accept_webhook", responses={
-    200: {"description": "Webhook processed successfully"},
-    400: {"description": "Invalid input"},
-    404: {"description": "Person not found"},
-    500: {"description": "Server error"}
-})
+
+@router.post(
+    "/accept_webhook",
+    responses={
+        200: {"description": "Webhook processed successfully"},
+        400: {"description": "Invalid input"},
+        404: {"description": "Person not found"},
+        500: {"description": "Server error"},
+    },
+)
 def accept_webhook(payload: WebhookPayload, db: Session = Depends(get_db)):
     try:
         if payload.payload_type == "PersonAdded":
@@ -35,16 +55,21 @@ def accept_webhook(payload: WebhookPayload, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Server error: {str(e)}')
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
     return {"detail": "Webhook processed successfully"}
 
-@router.get("/get_name", response_model=GetNameResponse, responses={
-    200: {"description": "Name fetched successfully"},
-    404: {"description": "Person not found"},
-    422: {"description": "Invalid UUID format"},
-    500: {"description": "Server error"}
-})
+
+@router.get(
+    "/get_name",
+    response_model=GetNameResponse,
+    responses={
+        200: {"description": "Name fetched successfully"},
+        404: {"description": "Person not found"},
+        422: {"description": "Invalid UUID format"},
+        500: {"description": "Server error"},
+    },
+)
 async def get_name(person_id: UUID4, db: Session = Depends(get_db)):
     try:
         person = get_person(db, person_id)
@@ -56,12 +81,19 @@ async def get_name(person_id: UUID4, db: Session = Depends(get_db)):
     except Exception:
         raise HTTPException(status_code=500, detail="Server error")
 
-@router.post("/execute_custom_nl_query", response_model=QueryResponse, responses={
-    200: {"description": "Query executed successfully"},
-    400: {"description": "Invalid input"},
-    500: {"description": "Server error"}
-})
-async def execute_custom_nl_query(query_request: QueryRequest, db: Session = Depends(get_db)):
+
+@router.post(
+    "/execute_custom_nl_query",
+    response_model=QueryResponse,
+    responses={
+        200: {"description": "Query executed successfully"},
+        400: {"description": "Invalid input"},
+        500: {"description": "Server error"},
+    },
+)
+async def execute_custom_nl_query(
+    query_request: QueryRequest, db: Session = Depends(get_db)
+):
     try:
         # Convert natural language to SQL
         sql_info_raw = translate_nl_to_sql(query_request.natural_language_query)

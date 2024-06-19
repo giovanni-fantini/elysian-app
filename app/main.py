@@ -1,7 +1,7 @@
-import logging
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+
 from app.api import router
 
 # Initialize FastAPI app
@@ -22,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/nl-to-sql", response_class=HTMLResponse)
 async def serve_nl_to_sql():

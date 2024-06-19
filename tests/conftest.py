@@ -1,14 +1,15 @@
-import pytest
 import os
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
 os.environ["OPENAI_API_KEY"] = "test-api-key"
 
+from app.db import Base, engine_factory, get_db
 from app.main import app
-from app.db import Base, get_db, engine_factory
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
@@ -19,6 +20,7 @@ engine = engine_factory(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 def override_get_db():
     try:
         db = TestingSessionLocal()
@@ -26,7 +28,9 @@ def override_get_db():
     finally:
         db.close()
 
+
 app.dependency_overrides[get_db] = override_get_db
+
 
 @pytest.fixture(scope="module")
 def mock_openai_response():
@@ -44,34 +48,39 @@ Parameters in JSON:
 ```
 """
 
+
 @pytest.fixture(scope="module")
 def mock_openai_error_response():
     return """Some invalid response or error message"""
 
+
 # Mock the OpenAI client for tests
 @pytest.fixture(scope="module")
 def mock_openai_client(mock_openai_response):
-    with patch('app.services.client') as mock_client:
+    with patch("app.services.client") as mock_client:
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message = MagicMock(content=mock_openai_response)
         mock_client.chat.completions.create.return_value = mock_response
         yield mock_client
-        
+
+
 # Mock the OpenAI client for tests
 @pytest.fixture(scope="module")
 def mock_openai_error_client(mock_openai_error_response):
-    with patch('app.services.client') as mock_client:
+    with patch("app.services.client") as mock_client:
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message = MagicMock(content=mock_openai_error_response)
         mock_client.chat.completions.create.return_value = mock_response
         yield mock_client
 
+
 # Create a fixture for the FastAPI test client
 @pytest.fixture(scope="module")
 def client(setup_database, mock_openai_client):
     return TestClient(app)
+
 
 # Create a fixture for setting up the database
 @pytest.fixture(scope="module")
@@ -81,6 +90,7 @@ def setup_database():
     yield
     # Teardown: Drop the tables
     Base.metadata.drop_all(bind=engine)
+
 
 # Create a fixture for the database session
 @pytest.fixture
