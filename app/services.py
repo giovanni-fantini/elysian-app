@@ -113,7 +113,6 @@ def translate_nl_to_sql(nl_query: str) -> dict:
         model="gpt-3.5-turbo", messages=messages, temperature=0, max_tokens=256
     )
     sql_info = response.choices[0].message.content
-    # Parse SQL info from OpenAI response
     return sql_info.strip()
 
 
@@ -125,7 +124,7 @@ def parse_openai_response(response: str) -> dict:
         response (str): The OpenAI response.
 
     Returns:
-        dict: The SQL template and parameters extracted from the response.
+        dict: The SQL template and optionally the parameters extracted from the response.
 
     Raises:
         ValueError: If the SQL template or JSON parameters are not found.
@@ -140,12 +139,11 @@ def parse_openai_response(response: str) -> dict:
 
     # Extract JSON params
     json_params_match = re.search(r"```json\n(.*?)\n```", response, re.DOTALL)
-    if not json_params_match:
-        raise ValueError("JSON parameters not found in response")
-    params_json = json_params_match.group(1).strip()
-
-    # Parse JSON parameters to a dictionary
-    params = json.loads(params_json)
+    if json_params_match:
+        params_json = json_params_match.group(1).strip()
+        params = json.loads(params_json)
+    else:
+        params = None  # No parameters found
 
     return {"query_template": sql_template, "params": params}
 
@@ -156,10 +154,10 @@ def format_and_execute_sql(db: Session, sql_info: dict):
 
     Args:
         db (Session): The database session.
-        sql_info (dict): The SQL template and parameters.
+        sql_info (dict): The SQL template and optionally parameters.
 
     Returns:
-        str: The formatted results to be returned.
+        dict: The formatted results to be returned.
 
     Raises:
         SQLAlchemyError: If an SQL execution error occurs.
@@ -176,20 +174,19 @@ def format_and_execute_sql(db: Session, sql_info: dict):
         # Create a text query using SQLAlchemy's text construct
         query = text(query_template)
 
-        # Validate SQL template
-        if not query_template or not params:
-            raise ValueError("Invalid SQL template or parameters")
+        # Possibility of params being None
+        if params:
+            result = db.execute(query, params)
+        else:
+            result = db.execute(query)
 
-        # Execute the SQL query
-        result = db.execute(query, params)
         db.commit()
 
         # Fetch and format result rows
         rows = result.fetchall()
-
         columns = result.keys()
         results = [dict(zip(columns, row)) for row in rows]
-
+        print(results)
         if not results:
             return "No results found."
 
