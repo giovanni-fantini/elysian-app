@@ -6,8 +6,8 @@ from app.api import router
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Elysian Insurance Services - Claim Conductor Phonebook Integration",
-    description="Service that handles incoming webhook notifications from a phonebook, manages internal state, and allows querying for current user names.",
+    title="Elysian - Claim Conductor Phonebook Integration",
+    description="Service that handles incoming webhook notifications from a phonebook, manages internal state, and allows querying for current user names and other queries via natural language.",
     version="1.0.0",
 )
 
