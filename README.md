@@ -43,10 +43,27 @@
   
 - **Better Testing**: Improve unit test coverage and develop comprehensive integration / E2E tests to validate the system's behavior and components interactions in a live-like environment.
   
-- **DevOps Improvements**: Such as restricting AWS security rules, using a non-root database user, serving the frontend from Amazon S3, and adding a reverse proxy with HTTPS support.
+- **DevOps Improvements**: Terraforming resources instead of manual provisioning, restricting AWS security rules, using a non-root database user, serving the frontend from Amazon S3, and adding a reverse proxy with HTTPS support.
 
 By addressing these areas, the project can achieve higher security, performance, and maintainability, making it better suited for production use.
 
 ## Further info
 
-Docs can be found inline and OpenAPI specs can be accessed at the `/docs` endpoint.
+The service is hosted at: <http://54.78.7.180/>. Most routes are accessible via traditional REST while there is only one FE route at `/nl-to-sql`.
+
+Example curl request to add a person:
+
+```sh
+curl -X POST http://54.78.7.180/accept_webhook \
+     -H "Content-Type: application/json" \
+     -d '{
+           "payload_type": "PersonAdded",
+           "payload_content": {
+             "person_id": "d59abfc4-3aae-4e29-875b-7b56e021ad63",
+             "name": "Jane Austen",
+             "timestamp": "2023-10-10T10:00:00Z"
+           }
+         }'
+```
+
+OpenAPI specs can be accessed at the `/docs` endpoint, while other info is dispersed inline in the code.
